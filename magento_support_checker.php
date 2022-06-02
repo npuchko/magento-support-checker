@@ -1,0 +1,484 @@
+<?php
+
+namespace {
+    if (PHP_SAPI !== 'cli') {
+        echo 'bin/magento must be run as a CLI application';
+        exit(1);
+    }
+    define('ROOT_DIRECTORY_FOR_MAGENTO', __DIR__ . '/../');
+
+    $checksList = [
+        'advanced_reporting' => [
+            \MagentoSupport\SupportChecker\EnabledChecker::class,
+            \MagentoSupport\SupportChecker\IsMultipleCurrency::class,
+            \MagentoSupport\SupportChecker\CronDbCheck::class,
+            \MagentoSupport\SupportChecker\TokenChecker::class,
+            \MagentoSupport\SupportChecker\FlagChecker::class,
+            \MagentoSupport\SupportChecker\EscapedQuotesChecker::class,
+            \MagentoSupport\SupportChecker\StoreInconsistencyChecker::class,
+            \MagentoSupport\SupportChecker\ReportUrl::class,
+        ]
+    ];
+
+    try {
+        require ROOT_DIRECTORY_FOR_MAGENTO . 'app/bootstrap.php';
+    } catch (\Exception $e) {
+        echo 'Autoload error: ' . $e->getMessage();
+        exit(1);
+    }
+    try {
+        $handler = new \Magento\Framework\App\ErrorHandler();
+        set_error_handler([$handler, 'handler']);
+        $application = new Magento\Framework\Console\Cli('Magento CLI');
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+
+        $checker = $om->get(\MagentoSupport\SupportChecker\Checker::class);
+
+        $input = new \Symfony\Component\Console\Input\ArgvInput();
+        $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+
+        $checker->runChecks($checksList, 'advanced_reporting', $input, $output);
+    } catch (\Exception $e) {
+        while ($e) {
+            echo $e->getMessage();
+            echo $e->getTraceAsString();
+            echo "\n\n";
+            $e = $e->getPrevious();
+        }
+        exit(Magento\Framework\Console\Cli::RETURN_FAILURE);
+    }
+}
+
+
+namespace MagentoSupport\SupportChecker {
+
+    use Magento\Analytics\Model\ReportUrlProvider;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+    use Magento\Framework\App\ResourceConnection;
+
+//    interface CheckInterface {
+//        public function getName();
+//        public function execute(InputInterface $input, OutputInterface $output);
+//    }
+
+    abstract class AbstractDbChecker //implements CheckInterface
+    {
+        /**
+         * @var resource Connection
+         */
+        protected $connection;
+
+        /**
+         * @var \Magento\Framework\App\Config\ScopeConfigInterface
+         */
+        protected $scopeConfig;
+
+        /**
+         * DbDataSeeker constructor.
+         * @param ResourceConnection $resource
+         */
+        public function __construct(ResourceConnection $resource, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig)
+        {
+            $this->connection = $resource->getConnection(\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION);
+            $this->scopeConfig = $scopeConfig;
+        }
+
+        abstract public function getName();
+
+        abstract public function execute(InputInterface $input, OutputInterface $output);
+
+        /**
+         * Get data from core config table
+         * @param $columns
+         * @param $pathValue
+         * @return false|string
+         */
+        protected function selectFromCoreConfig($columns, $pathValue)
+        {
+            $configTable = $this->connection->getTableName('core_config_data');
+            $select = $this->connection->select()->from($configTable, $columns)->where('path LIKE :path');
+            $bind = [':path' => $pathValue];
+            return $this->connection->fetchAll($select, $bind);
+        }
+    }
+
+    class EnabledChecker extends AbstractDbChecker
+    {
+        public function getName()
+        {
+            return 'Is Enabled';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $isError = false;
+            $dbRows = $this->selectFromCoreConfig(
+                ['scope', 'scope_id', 'value'],
+                'analytics/subscription/enabled'
+            );
+            foreach ($dbRows as $dbRow) {
+                if (!$dbRow['value']) {
+                    // checking if app/etc/*.php files overrides this.
+                    $isSetFlag = $this->scopeConfig->isSetFlag('analytics/subscription/enabled', $dbRow['scope'], $dbRow['scope_id']);
+
+                    if (!$isSetFlag) {
+                        $isError = true;
+                        $output->writeln("<error>Module disabled in DB for scope: {$dbRow['scope']} = {$dbRow['scope_id']}</error>");
+                    }
+                }
+            }
+
+            if ($isError) {
+                return false;
+            }
+            $isModuleEnabledByConfig = $this->scopeConfig->isSetFlag('analytics/subscription/enabled');
+
+            if (!$isModuleEnabledByConfig) {
+                $output->writeln("<error>Module disabled in app/etc/config.php or app/etc/env.php</error>");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    class IsMultipleCurrency extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Multiple Currency';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $result = $this->isMultiCurrency();
+
+            if (count($result) > 1) {
+                $output->writeln('<error>There is multiple currencies was in db found:' . json_encode($result) . '</error>');
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * check multiCurrency
+         * @return string
+         */
+        private function isMultiCurrency()
+        {
+            $select = $this->connection->select()->from(
+                $this->connection->getTableName('sales_order'),
+                ['base_currency_code', 'COUNT(*)'])
+                ->distinct(true)
+                ->group('base_currency_code');
+            $result = $this->connection->fetchAll($select);
+
+            return $result;
+            if (count($result) > 1) {
+                return 'There is multiple currencies was found:' . json_encode($result);
+            } else {
+                return 'No multiple currencies was found';
+            }
+        }
+    }
+
+    class CronDbCheck extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Cron in DB settings';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+
+            $row = $this->selectFromCoreConfig(
+                ['scope', 'scope_id', 'value'],
+                '%analytics_collect_data/schedule/cron_expr'
+            );
+
+            if (!$row) {
+                $output->writeln('<error>Cron executed time not set!</error>');
+            } else {
+                $output->writeln(json_encode($row));
+            }
+
+            $cronJob = $this->findAnalyticsCronJobInDb();
+            if (count($cronJob)) {
+
+                $output->writeln('Cron jobs in DB: ' . json_encode($cronJob));
+            } else {
+                $output->writeln('Cron jobs in DB not found');
+            }
+
+            return false;
+        }
+
+        /**
+         * Find all analytics_collect_data rows
+         * @return false|string
+         */
+        private function findAnalyticsCronJobInDb()
+        {
+            $select = $this->connection->select()->from(
+                $this->connection->getTableName('cron_schedule'),
+                ['job_code', 'messages', 'status'])->where('job_code LIKE :job_code');
+            $bind = [':job_code' => 'analytics_collect_data'];
+            return $this->connection->fetchAll($select, $bind);
+
+
+        }
+    }
+
+    class TokenChecker extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Token in settings';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $configToken = $this->scopeConfig->getValue('analytics/general/token');
+
+            $dbToken = $this->selectFromCoreConfig(
+                ['scope', 'scope_id', 'value'],
+                'analytics/general/token'
+            );
+
+            if (!$configToken && !$dbToken) {
+                $output->writeln('<error>No Token found</error>');
+                return false;
+            }
+
+            $dbToken = $dbToken[0]['value'] ?? null;
+            if ($configToken == $dbToken) {
+                return true;
+            }
+
+            $output->write('Token setted in app/etc/*.php file ');
+
+            return true;
+        }
+    }
+
+    class FlagChecker extends AbstractDbChecker
+    {
+        public function getName()
+        {
+            return 'Last generated report in flag';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $flag = $this->checkFlagTable();
+
+            if (!count($flag)) {
+                $output->writeln('<error>Flag not found, report wasnt generated</error>');
+                $counterFlag = $this->getCounterFlag();
+                if ($counterFlag) {
+                    $output->writeln('<error>Counter flag found: ' . json_encode($counterFlag) . '</error>');
+                }
+
+                return false;
+            }
+
+            $flag = $flag[0];
+            $lastUpdate = new \DateTime($flag['last_update']);
+            $currentDate = new \DateTime();
+            $diffDays = $currentDate->diff($lastUpdate)->format('%a');
+
+            $isError = false;
+            if ($diffDays > 2) {
+                $output->write('<error>' . $diffDays . ' days ago. (' . $flag['last_update'] . ')</error>');
+                $isError = true;
+            } else {
+                $output->write($diffDays . ' days ago. (' . $flag['last_update'] . ') ');
+            }
+
+            $flagData = json_decode($flag['flag_data'], true);
+            $filePath = ROOT_DIRECTORY_FOR_MAGENTO . 'pub/media/' . $flagData['path'];
+
+
+            if (!is_file($filePath)) {
+                $isError = true;
+                $output->writeln('');
+                $output->writeln('<error>File not found!</error> ' . $filePath);
+            }
+
+            $url = $this->scopeConfig->getValue('web/secure/base_url') . 'media/' . $flagData['path'];
+            $output->writeln('File URL: ' . $url);
+
+
+            return !$isError;
+        }
+
+        private function checkFlagTable()
+        {
+            $select = $this->connection->select()->from(
+                $this->connection->getTableName('flag'),
+                ['flag_code', 'flag_data', 'last_update'])
+                ->where('flag_code LIKE :flag_code');
+            $bind = [':flag_code' => 'analytics_file_info'];
+            return $this->connection->fetchAll($select, $bind);
+        }
+
+        private function getCounterFlag()
+        {
+            $select = $this->connection->select()->from(
+                $this->connection->getTableName('flag'),
+                ['flag_code', 'flag_data', 'last_update'])
+                ->where('flag_code LIKE :flag_code');
+            $bind = [':flag_code' => 'analytics_link_subscription_update_reverse_counter'];
+            return $this->connection->fetchAll($select, $bind);
+        }
+    }
+
+    class EscapedQuotesChecker extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Escaped quotes in db';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $escapedQuotes = $this->checkEscapedQuotes();
+            $escapedQuotesCount = count($escapedQuotes);
+
+            if ($escapedQuotesCount > 0) {
+                $output->writeln('<error>Found escaped quotes</error>');
+                $output->writeln(json_encode($escapedQuotes));
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Find escaped quotes
+         * @return false|string
+         */
+        private function checkEscapedQuotes()
+        {
+            $select = $this->connection->select()->from(
+                $this->connection->getTableName('sales_order_item'),
+                ['name', 'COUNT(*)', 'sku'])
+                ->where('name like \'%\\\\\\\\"%\' or name like \'%\"%\' ')
+                ->group(['name', 'sku']);
+            $result = $this->connection->fetchAll($select);
+            return ($result);
+
+        }
+    }
+
+    class StoreInconsistencyChecker extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Check unexisting stores';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $result = $this->connection->fetchCol(
+                "SELECT store_id FROM sales_order WHERE store_id not in (select store_id from store) GROUP BY store_id"
+            );
+
+            if (count($result) > 0) {
+                $output->writeln('<error>sales_order contains unexisting store ids ' . json_encode() . '</error>');
+
+                return false;
+            }
+
+            return true;
+
+        }
+    }
+
+    class ReportUrl extends AbstractDbChecker
+    {
+
+        /**
+         * @var ReportUrlProvider
+         */
+        private $reportUrlProvider;
+
+        public function __construct(
+            ResourceConnection $resource,
+            \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+            ReportUrlProvider $reportUrlProvider
+        ) {
+            parent::__construct($resource, $scopeConfig);
+
+            $this->reportUrlProvider = $reportUrlProvider;
+        }
+
+        public function getName()
+        {
+            return 'Generated report URL';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $url = $this->reportUrlProvider->getUrl();
+
+            $output->writeln($url);
+
+            return false;
+        }
+    }
+
+    class Checker
+    {
+        /**
+         * @var \Magento\Framework\ObjectManagerInterface
+         */
+        private $objectManager;
+
+        public function __construct(\Magento\Framework\ObjectManagerInterface $objectManager)
+        {
+            $this->objectManager = $objectManager;
+        }
+
+        public function runChecks(array $checksGroups, ?string $checkGroup = null, InputInterface $input, OutputInterface $output)
+        {
+            $output->writeln('');
+            $result = [];
+            foreach ($checksGroups as $group => $checkClasses) {
+
+                if ($checkGroup !== null && $checkGroup != $group) {
+                    continue;
+                }
+                $result[$group] = [];
+
+                $total = count($checkClasses);
+                $output->writeln("Check group: {$group} with total {$total} rules'");
+                foreach ($checkClasses as $i => $checkClass) {
+                    /** @var AbstractDbChecker $check */
+                    $check = $this->objectManager->get($checkClass);
+
+                    $i++;
+                    $output->write("[{$i}/$total] " . $check->getName() . ': ');
+                    $result = $check->execute($input, $output);
+                    if ($result === true) {
+                        $output->writeln('<info>OK</info>');
+                    }
+                }
+                $output->writeln('');
+            }
+
+            return $result;
+        }
+    }
+}
+
+
