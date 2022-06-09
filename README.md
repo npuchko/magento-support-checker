@@ -1,4 +1,4 @@
-1. Have magento-cloud installed and configured with API TOKEN.
+ 1. Have magento-cloud installed and configured with API TOKEN.
 
 2. Run command
 ```shell
@@ -16,6 +16,11 @@ Non-interactive
 msc cloud-project-id cloud-project-env
 # example
 msc ko32g3ggweggr staging
+```
+
+To check product recommendations:
+```shell
+msc ko32g3ggweggr staging product_recommendations
 ```
 
 Example report:

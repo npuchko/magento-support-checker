@@ -656,8 +656,8 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
 
     class SyncCheck extends AbstractDbChecker
     {
-        private StoreManagerInterface $storeManager;
-        private ServiceClientInterface $serviceClient;
+        private $storeManager;
+        private $serviceClient;
 
         public function __construct(ResourceConnection $resource,
                                     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
