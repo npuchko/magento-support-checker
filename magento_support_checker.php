@@ -1,6 +1,7 @@
 <?php
 
 namespace {
+
     if (PHP_SAPI !== 'cli') {
         echo 'bin/magento must be run as a CLI application';
         exit(1);
@@ -17,6 +18,13 @@ namespace {
             \MagentoSupport\SupportChecker\EscapedQuotesChecker::class,
             \MagentoSupport\SupportChecker\StoreInconsistencyChecker::class,
             \MagentoSupport\SupportChecker\ReportUrl::class,
+        ],
+        'product_recommendations' => [
+            \MagentoSupport\SupportChecker\ProductRecommendations\ApiKeys::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\EnvIds::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\IndexedData::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\CronCheck::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\SyncCheck::class,
         ]
     ];
 
@@ -35,9 +43,13 @@ namespace {
         $checker = $om->get(\MagentoSupport\SupportChecker\Checker::class);
 
         $input = new \Symfony\Component\Console\Input\ArgvInput();
+        $checkGroup = $input->getFirstArgument();
+        if (!$checkGroup) {
+            $checkGroup = 'advanced_reporting';
+        }
         $output = new \Symfony\Component\Console\Output\ConsoleOutput();
 
-        $checker->runChecks($checksList, 'advanced_reporting', $input, $output);
+        $checker->runChecks($checksList, $checkGroup, $input, $output);
     } catch (\Exception $e) {
         while ($e) {
             echo $e->getMessage();
@@ -73,6 +85,7 @@ namespace MagentoSupport\SupportChecker {
          * @var \Magento\Framework\App\Config\ScopeConfigInterface
          */
         protected $scopeConfig;
+        protected $resource;
 
         /**
          * DbDataSeeker constructor.
@@ -82,6 +95,7 @@ namespace MagentoSupport\SupportChecker {
         {
             $this->connection = $resource->getConnection(\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION);
             $this->scopeConfig = $scopeConfig;
+            $this->resource = $resource;
         }
 
         abstract public function getName();
@@ -413,10 +427,11 @@ namespace MagentoSupport\SupportChecker {
         private $reportUrlProvider;
 
         public function __construct(
-            ResourceConnection $resource,
+            ResourceConnection                                 $resource,
             \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-            ReportUrlProvider $reportUrlProvider
-        ) {
+            ReportUrlProvider                                  $reportUrlProvider
+        )
+        {
             parent::__construct($resource, $scopeConfig);
 
             $this->reportUrlProvider = $reportUrlProvider;
@@ -482,3 +497,227 @@ namespace MagentoSupport\SupportChecker {
 }
 
 
+namespace MagentoSupport\SupportChecker\ProductRecommendations {
+
+    use Magento\CatalogSyncAdmin\Model\ServiceClientInterface;
+    use Magento\Framework\App\ResourceConnection;
+    use Magento\ProductRecommendationsSyncAdmin\Controller\Adminhtml\Index\Middleware;
+    use Magento\Store\Model\StoreManagerInterface;
+    use MagentoSupport\SupportChecker\AbstractDbChecker;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+
+    class ApiKeys extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'API keys';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $productionApiKey = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_api_key');
+            $private = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_private_key');
+
+            return $productionApiKey && $private;
+        }
+    }
+
+    class EnvIds extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'ENV Data';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $fields = [
+                'services_connector/services_id/project_id' => 'Project ID',
+                'services_connector/services_id/project_name' => 'Project Name',
+                'services_connector/services_id/environment_id' => 'Data Space ID(env ID)',
+                'services_connector/services_id/environment_name' => 'Data Space Name',
+                'services_connector/services_id/environment' => 'Data Space Type',
+            ];
+
+            $output->writeln('');
+
+            $hasEmpty = false;
+            foreach ($fields as $xpath => $title) {
+                $value = $this->scopeConfig->getValue($xpath);
+                $output->writeln("{$title}: {$value}");
+                if (empty($value)) {
+                    $hasEmpty = true;
+                }
+            }
+
+            if ($hasEmpty) {
+                $output->writeln('<error>Some of fields are empty!</error>');
+            } else {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    class IndexedData extends AbstractDbChecker
+    {
+
+        public function __construct(ResourceConnection $resource, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig)
+        {
+            parent::__construct($resource, $scopeConfig);
+        }
+
+        public function getName()
+        {
+            return 'Indexed products';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $dataExporterCount = $this->count('catalog_data_exporter_products');
+            $productsTotalCount = $this->count('catalog_product_entity');
+            $storeCount = $this->count('store');
+
+            $output->writeln("{$dataExporterCount} rows in {$storeCount} stores (catalog_product_entity has {$productsTotalCount})");
+
+            return false;
+        }
+
+        private function count($table)
+        {
+            $table = $this->resource->getTableName($table);
+
+            $sql = "SELECT COUNT(*) FROM {$table}";
+            return $this->connection->fetchOne($sql);
+        }
+    }
+
+    class CronCheck extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Cron';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $table = $this->resource->getTableName('cron_schedule');
+
+            $jobCodes = ['submit_product_feed', 'submit_product_metadata_feed'];
+            $statuses = ['error', 'missed', 'pending', 'success'];
+
+            $sql = "SELECT count(*) as cnt, job_code, status, MAX(executed_at) as last FROM {$table}
+            WHERE job_code IN ('submit_product_feed', 'submit_product_metadata_feed')
+            GROUP BY job_code, status;";
+
+            $rows = $this->connection->fetchAll($sql);
+
+            $data = [];
+            foreach ($rows as $row) {
+                $data[$row['job_code'] . '_' . $row['status']] = ['count' => $row['cnt'], 'last' => $row['last']];
+            }
+            $output->writeln('');
+            $hasErrors = false;
+            $notHaveSuccess = false;
+            foreach ($jobCodes as $jobCode) {
+                $output->writeln('Job code ' . $jobCode . ' ');
+                foreach ($statuses as $status) {
+                    $count = $data[$jobCode . '_' . $status]['count'] ?? '0';
+                    if ($status === 'error' && $count > 0) {
+                        $hasErrors = true;
+                    }
+
+                    if ($status === 'success' && $count == 0){
+                        $notHaveSuccess = true;
+                    }
+                    $last = $data[$jobCode . '_' . $status]['last'] ?? ' N/A';
+                    $output->writeln("{$status} - {$count} rows, last exec time {$last}");
+                }
+                $output->writeln('');
+            }
+
+            if ($hasErrors) {
+                $output->writeln('<error>Cron jobs has errors</error>');
+                return false;
+            }
+            if ($notHaveSuccess) {
+                $output->writeln('<error>No one success cron job</error>');
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    class SyncCheck extends AbstractDbChecker
+    {
+        private StoreManagerInterface $storeManager;
+        private ServiceClientInterface $serviceClient;
+
+        public function __construct(ResourceConnection $resource,
+                                    \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+                                    StoreManagerInterface $storeManager,
+                                    ServiceClientInterface $serviceClient)
+        {
+            parent::__construct($resource, $scopeConfig);
+            $this->storeManager = $storeManager;
+            $this->serviceClient = $serviceClient;
+        }
+
+        public function getName()
+        {
+            return 'Sync Status';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $envId = $this->scopeConfig->getValue('services_connector/services_id/environment_id');
+            if (!$envId) {
+                $output->writeln('<info>No env ID!</info>');
+                return false;
+            }
+
+
+            $stores = $this->storeManager->getStores(false);
+
+            foreach ($stores as $store) {
+                $website = $this->storeManager->getWebsite($store->getWebsiteId())->getCode();
+                $storeCode =$store->getCode();
+                $output->writeln('Store ' . $storeCode);
+
+
+                $url = "catalogsyncstatus/environments/{$envId}/websites/{$website}/storeviews/{$storeCode}/aggregated";
+
+                $baseRoute = $this->scopeConfig->getValue('product_recommendations_sync_admin/admin_api_path');
+                $apiUrl = $this->serviceClient->getUrl($baseRoute, 'v1', $url);
+
+
+                $response = $this->serviceClient->request('GET', $apiUrl, '');
+
+                if (!isset($response['storeViewSyncStatusResponse'])) {
+                    $output->writeln('<error>ERROR:</error> ' .json_encode($response));
+                    continue;
+                }
+                $output->writeln(
+                    "Total count: {$response['documentCountResponse']['documentCount']}"
+                );
+                $output->writeln(
+                    "Last Sync - Num synced: {$response['storeViewSyncStatusResponse']['numSynced']}, "
+                    . "Last Time: {$response['storeViewSyncStatusResponse']['lastSyncTs']}, "
+                    . "Status: {$response['storeViewSyncStatusResponse']['status']} "
+                );
+
+
+                $output->writeln('');
+            }
+
+
+            return null;
+        }
+    }
+}
