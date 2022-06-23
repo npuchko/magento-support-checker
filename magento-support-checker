@@ -12,6 +12,29 @@ getSourceDirOfScript () {
   echo $SCRIPT_DIR
 }
 
+printHelp () {
+  echo ""
+  echo "Run syntax"
+  echo "msc {cloud_project_id} {cloud_env_id} {check_id}"
+  echo ""
+  printAvailableChecks
+}
+
+printAvailableChecks () {
+  echo "Available checks:"
+  echo "all - run all checks"
+  echo "advanced_reporting - run only advanced_reporting"
+  echo "product_recommendations - run only product_recommendations"
+  echo ""
+}
+
+
+if [ $1 == 'help' ]
+then
+    printHelp
+    exit
+fi
+
 if [ -z "$1" ]
 then
       read -p 'Enter cloud project ID: ' CLOUD_PROJECT_ID
@@ -25,6 +48,16 @@ if [ -z "$2" ]
 then
       magento-cloud env:list -p ${CLOUD_PROJECT_ID} -I --format plain --pipe
       read -p 'Enter environment ID: ' CLOUD_ENV_ID
+else
+  CLOUD_ENV_ID=$2
+
+  echo "Cloud environment ID  is: ${CLOUD_ENV_ID}"
+fi
+
+if [ -z "$3" ]
+then
+      printAvailableChecks
+      read -p 'Enter check ID: ' CLOUD_ENV_ID
 else
   CLOUD_ENV_ID=$2
 

@@ -40,12 +40,13 @@ namespace {
         $application = new Magento\Framework\Console\Cli('Magento CLI');
         $om = \Magento\Framework\App\ObjectManager::getInstance();
 
+        /** @var \MagentoSupport\SupportChecker\Checker $checker */
         $checker = $om->get(\MagentoSupport\SupportChecker\Checker::class);
 
         $input = new \Symfony\Component\Console\Input\ArgvInput();
         $checkGroup = $input->getFirstArgument();
-        if (!$checkGroup) {
-            $checkGroup = 'advanced_reporting';
+        if (!$checkGroup || $checkGroup === 'all') {
+            $checkGroup = null;
         }
         $output = new \Symfony\Component\Console\Output\ConsoleOutput();
 

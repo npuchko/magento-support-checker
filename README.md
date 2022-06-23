@@ -1,29 +1,49 @@
- 1. Have magento-cloud installed and configured with API TOKEN.
+# Installation
+1. Have magento-cloud installed and configured with API TOKEN.
 
-2. Run command
+2. Install shortcut script
 ```shell
 
 sudo ln -s /Users/npuchko/www/tools/advanced-reporting-check/magento-support-checker /usr/local/bin/msc
 ```
 
-3. Usage
-Interactive
+# Usage
+## Interactive
 ```shell
 msc
 ```
-Non-interactive
+## Non-interactive
 ```shell
-msc cloud-project-id cloud-project-env
+msc {cloud-project-id} {cloud-project-env} {check-name}
 # example
-msc ko32g3ggweggr staging
+msc ko32g3ggweggr staging advanced_reporting
 ```
 
-To check product recommendations:
+## List checks:
+- Advanced Reporting
+```shell
+msc ko32g3ggweggr staging advanced_reporting
+```
+
+- Product recommendations:
 ```shell
 msc ko32g3ggweggr staging product_recommendations
 ```
 
-Example report:
+## Using without Magento Cloud
+1. Copy php script into {MAGENTO_ROOT_DIR}/var directory
+2. Run php script
+```bash
+# all checks
+php magento_support_checker.php all
+# product recommendations only
+php magento_support_checker.php product_recommendations
+# advanced reporting only
+php magento_support_checker.php advanced_reporting
+```
+
+
+# Example report:
 ```shell
 Check group: advanced_reporting with total 8 rules'
 [1/8] Is Enabled: OK
