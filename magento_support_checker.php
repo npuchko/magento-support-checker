@@ -224,6 +224,25 @@ namespace MagentoSupport\SupportChecker {
 
             $cronJob = $this->findAnalyticsCronJobInDb();
             if (count($cronJob)) {
+                $hasErrors = false;
+                $errorMessages = [];
+                foreach ($cronJob as $job) {
+                    if ($job['status'] === 'error') {
+                        $hasErrors = true;
+                        $errorMessages[$job['messages']] = 1;
+                    }
+                }
+
+                if ($hasErrors) {
+                    $output->writeln('<error>Cron jobs has errors</error>');
+                    $errorMessages = array_keys($errorMessages);
+                    $errorMessages = array_slice($errorMessages, 0, 10);
+                    foreach ($errorMessages as $errorMessage) {
+                        $output->writeln('-    <error>' . $errorMessage. '</error>');
+                    }
+
+                    $output->writeln('');
+                }
 
                 $output->writeln('Cron jobs in DB: ' . json_encode($cronJob));
             } else {
@@ -276,9 +295,9 @@ namespace MagentoSupport\SupportChecker {
                 return true;
             }
 
-            $output->write('Token setted in app/etc/*.php file ');
+            $output->writeln('<error>Token setted in app/etc/*.php file</error>');
 
-            return true;
+            return false;
         }
     }
 
@@ -368,9 +387,13 @@ namespace MagentoSupport\SupportChecker {
             $escapedQuotesCount = count($escapedQuotes);
 
             if ($escapedQuotesCount > 0) {
-                $output->writeln('<error>Found escaped quotes</error>');
-                $output->writeln(json_encode($escapedQuotes));
+                $output->writeln('<error>Found '.$escapedQuotesCount.' rows with escaped quotes</error>');
+                $out = array_slice($escapedQuotes, 0, 10);
+                foreach ($out as $product) {
+                    $output->writeln($product['sku'] . ' - ' . $product['name']);
+                }
 
+                $output->writeln('');
                 return false;
             }
 
