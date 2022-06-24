@@ -21,6 +21,7 @@ namespace {
         ],
         'product_recommendations' => [
             \MagentoSupport\SupportChecker\ProductRecommendations\ApiKeys::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\ExtensionVersion::class,
             \MagentoSupport\SupportChecker\ProductRecommendations\EnvIds::class,
             \MagentoSupport\SupportChecker\ProductRecommendations\IndexedData::class,
             \MagentoSupport\SupportChecker\ProductRecommendations\CronCheck::class,
@@ -548,6 +549,41 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
         }
     }
 
+    class ExtensionVersion extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'magento/product-recommendations version:';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $composerLock = ROOT_DIRECTORY_FOR_MAGENTO . '/composer.lock';
+            if (!is_file($composerLock)) {
+                $output->writeln('I cant read composer.lock file');
+
+                return;
+            }
+
+            $composerData = file_get_contents($composerLock);
+            $composerData = json_decode($composerData, true);
+
+            $version = null;
+            foreach ($composerData['packages'] as $package) {
+                if ($package['name'] === 'magento/product-recommendations') {
+                    $version = $package['version'] ?? 'VERSION NOT SET';
+                }
+            }
+
+            if ($version) {
+                $output->writeln($version);
+            } else {
+                $output->writeln('<error>Package not found in composer.lock file!</error>');
+            }
+        }
+    }
+
     class EnvIds extends AbstractDbChecker
     {
 
@@ -564,6 +600,8 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                 'services_connector/services_id/environment_id' => 'Data Space ID(env ID)',
                 'services_connector/services_id/environment_name' => 'Data Space Name',
                 'services_connector/services_id/environment' => 'Data Space Type',
+                'services_connector/product_recommendations/alternate_environment_enabled' => 'Alternate ENV enabled?',
+                'services_connector/product_recommendations/alternate_environment_id' => 'Alternate ENV ID',
             ];
 
             $output->writeln('');
@@ -575,6 +613,14 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                 if (empty($value)) {
                     $hasEmpty = true;
                 }
+            }
+
+            if ($this->scopeConfig->isSetFlag('services_connector/product_recommendations/alternate_environment_enabled'))
+            {
+                $output->writeln('<error>Alternate env ENABLED!</error>');
+
+            } else {
+                $output->writeln('<info>Alternate env DISABLED!</info>');
             }
 
             if ($hasEmpty) {
