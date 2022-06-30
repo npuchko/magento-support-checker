@@ -29,7 +29,7 @@ printAvailableChecks () {
 }
 
 
-if [ $1 == 'help' ]
+if [ "$1" == "help" ]
 then
     printHelp
     exit
