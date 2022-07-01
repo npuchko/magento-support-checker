@@ -553,6 +553,15 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
             $productionApiKey = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_api_key');
             $private = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_private_key');
 
+
+            if (!$productionApiKey) {
+                $output->writeln('<error>Production API key not found!</error>');
+            }
+
+            if (!$private) {
+                $output->writeln('<error>Production Private key not found!</error>');
+            }
+
             return $productionApiKey && $private;
         }
     }
@@ -618,7 +627,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
             foreach ($fields as $xpath => $title) {
                 $value = $this->scopeConfig->getValue($xpath);
                 $output->writeln("{$title}: {$value}");
-                if (empty($value)) {
+                if (empty($value) && strpos($xpath, 'alternate') === false) {
                     $hasEmpty = true;
                 }
             }
@@ -789,6 +798,15 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                     . "Last Time: {$response['storeViewSyncStatusResponse']['lastSyncTs']}, "
                     . "Status: {$response['storeViewSyncStatusResponse']['status']} "
                 );
+
+                $url = "/{$envId}/{$storeCode}/units";
+                $apiUrl = $this->serviceClient->getUrl($baseRoute, 'v1', $url);
+
+
+                $response = $this->serviceClient->request('GET', $apiUrl, '');
+
+                $output->writeln('Units: ');
+                $output->writeln(json_encode($response));
 
 
                 $output->writeln('');
