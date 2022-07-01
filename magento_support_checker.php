@@ -66,6 +66,7 @@ namespace {
 
 namespace MagentoSupport\SupportChecker {
 
+    use Magento\Analytics\Model\Config\Backend\CollectionTime;
     use Magento\Analytics\Model\ReportUrlProvider;
     use Symfony\Component\Console\Input\InputInterface;
     use Symfony\Component\Console\Output\OutputInterface;
@@ -221,6 +222,13 @@ namespace MagentoSupport\SupportChecker {
                 $output->writeln('<error>Cron executed time not set!</error>');
             } else {
                 $output->writeln(json_encode($row));
+            }
+
+            $cronDefaultConfig = $this->scopeConfig->getValue('crontab/analytics/jobs/analytics_collect_data/schedule/cron_expr');
+            $cronAnalyticsConfig = $this->scopeConfig->getValue('crontab/default/jobs/analytics_collect_data/schedule/cron_expr');
+
+            if ($cronAnalyticsConfig && $cronDefaultConfig) {
+                $output->writeln('<error>Cron setted up for 2 cron groups: default and analytics. Remove old one!</error>');
             }
 
             $cronJob = $this->findAnalyticsCronJobInDb();
