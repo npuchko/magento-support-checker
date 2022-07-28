@@ -1,7 +1,7 @@
 <?php
 
 $envType = PrexConfig::PROD;
-$dataSpaceId = 'data_space_id';
+$dataSpaceId = '152f00fd-e7c8-4e97-9faf-b24f2ba05366';
 
 
 
@@ -38,7 +38,10 @@ foreach ($array['hits']['hits'] as $productIndex) {
     }
 
     foreach ($productIndex['_source']['product'] as $storeCode => $productData) {
-        $storesWebsites[$website][$storeCode] = true;
+        if (!isset($storesWebsites[$website][$storeCode])) {
+            $storesWebsites[$website][$storeCode] = 0;
+        }
+        $storesWebsites[$website][$storeCode] += 1;
 
         if (!empty($productData['url'])) {
             $urlDomains[getDomain($productData['url'])] = true;
@@ -51,17 +54,21 @@ echo PHP_EOL;
 
 foreach ($storesWebsites as $website => $stores) {
     echo "Website: {$website}" . PHP_EOL;
-    echo "Stores: " . implode(', ', array_keys($stores)) . PHP_EOL;
+    $totalCount = 0;
+    echo "Stores: ". PHP_EOL;
+    foreach ($stores as $storeCode => $productsCount) {
+        $totalCount = max($productsCount, $totalCount);
+        echo "-   {$storeCode} ({$productsCount} products)" . PHP_EOL;
+    }
+    echo "Total products count for website: {$totalCount} products" . PHP_EOL;
     echo PHP_EOL;
 }
-
-
-
-echo PHP_EOL;
+echo "Domains: " . PHP_EOL;
 
 foreach ($urlDomains as $domain => $a) {
     echo $domain . PHP_EOL;
 }
+echo PHP_EOL;
 
 
 
