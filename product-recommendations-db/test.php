@@ -32,6 +32,10 @@ $storesWebsites = [];
 foreach ($array['hits']['hits'] as $productIndex) {
     $website = $productIndex['_source']['websiteCode'];
     $storesWebsites[$website] = $storesWebsites[$website] ?? [];
+    if (!isset($productIndex['_source']['product'])) {
+        echo $productIndex['_id'] . PHP_EOL;
+        continue;
+    }
 
     foreach ($productIndex['_source']['product'] as $storeCode => $productData) {
         $storesWebsites[$website][$storeCode] = true;
