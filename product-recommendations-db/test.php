@@ -13,38 +13,66 @@ $prexClient = new PrexClient($prexConfig->getConfig($envType));
 
 
 
+$cacheDir = __DIR__ . '/cache/' . $dataSpaceId . '/';
+if (!is_dir($cacheDir)) {
+    mkdir($cacheDir);
+}
+$cacheFiles = glob($cacheDir . '*.json');
 
-$cacheFile = __DIR__ . '/'.$dataSpaceId . '.json';
+if (!$cacheFiles) {
+    $start = 0;
+    $size = 500;
 
-if (is_file($cacheFile)) {
-    $data = file_get_contents($cacheFile);
-} else {
-    $data = $prexClient->call($dataSpaceId, ['from' => 0, 'size' => 10000]);
-    file_put_contents($cacheFile, $data);
+    $i = 0;
+    do {
+        $data = $prexClient->call($dataSpaceId, ['from' => $start, 'size' => $size]);
+        $array = json_decode($data, true);
+
+        if (!isset($array['hits']['hits'])) {
+            var_dump('Array is empty', $array);
+            break;
+        }
+
+        file_put_contents($cacheDir . $i . '.json', $data);
+
+        $start += $size;
+        $i++;
+    } while($array['hits']['total']['value'] > $start);
 }
 
 
-$array = json_decode($data, true);
 
 $urlDomains = [];
-
 $storesWebsites = [];
-foreach ($array['hits']['hits'] as $productIndex) {
-    $website = $productIndex['_source']['websiteCode'];
-    $storesWebsites[$website] = $storesWebsites[$website] ?? [];
-    if (!isset($productIndex['_source']['product'])) {
-        echo $productIndex['_id'] . PHP_EOL;
-        continue;
+
+$cacheFiles = glob($cacheDir . '*.json');
+foreach ($cacheFiles as $cacheFile) {
+    $data = file_get_contents($cacheFile);
+    $array = json_decode($data, true);
+
+    if (!isset($array['hits']['hits'])) {
+        var_dump('Array is empty', $array);
+        break;
     }
 
-    foreach ($productIndex['_source']['product'] as $storeCode => $productData) {
-        if (!isset($storesWebsites[$website][$storeCode])) {
-            $storesWebsites[$website][$storeCode] = 0;
-        }
-        $storesWebsites[$website][$storeCode] += 1;
 
-        if (!empty($productData['url'])) {
-            $urlDomains[getDomain($productData['url'])] = true;
+    foreach ($array['hits']['hits'] as $productIndex) {
+        $website = $productIndex['_source']['websiteCode'];
+        $storesWebsites[$website] = $storesWebsites[$website] ?? [];
+        if (!isset($productIndex['_source']['product'])) {
+            echo $productIndex['_id'] . PHP_EOL;
+            continue;
+        }
+
+        foreach ($productIndex['_source']['product'] as $storeCode => $productData) {
+            if (!isset($storesWebsites[$website][$storeCode])) {
+                $storesWebsites[$website][$storeCode] = 0;
+            }
+            $storesWebsites[$website][$storeCode] += 1;
+
+            if (!empty($productData['url'])) {
+                $urlDomains[getDomain($productData['url'])] = true;
+            }
         }
     }
 }
