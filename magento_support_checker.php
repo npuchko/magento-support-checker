@@ -809,6 +809,29 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                 $output->writeln(json_encode($response));
 
 
+                foreach ($response['results'] as $unit) {
+                    $found = false;
+                    foreach ($unit['filterRules'] as $filterRule) {
+                        foreach ($filterRule['conditions'] as $condition) {
+                            if ($condition['field'] === 'category') {
+                                //$found = true;
+
+                                foreach ($condition['operator']['customOperator']['value'] ?? [] as $val) {
+                                    if (is_null($val)) {
+                                        $found = true;
+                                    }
+                                }
+                                break 2;
+                            }
+                        }
+                    }
+
+                    if ($found) {
+                        $output->writeln('<error>Invalid category filter in: ' ."Unit {$unit['unitId']} {$unit['unitName']}". '</error>');
+                    }
+                }
+
+
                 $output->writeln('');
             }
 
