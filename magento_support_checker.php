@@ -279,6 +279,19 @@ namespace MagentoSupport\SupportChecker {
 
     class TokenChecker extends AbstractDbChecker
     {
+        /**
+         * @var Magento\Analytics\Model\AnalyticsToken
+         */
+        private $analyticsToken;
+
+        public function __construct(
+            ResourceConnection $resource,
+            \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+            \Magento\Analytics\Model\AnalyticsToken $analyticsToken
+        ) {
+            parent::__construct($resource, $scopeConfig);
+            $this->analyticsToken = $analyticsToken;
+        }
 
         public function getName()
         {
@@ -289,12 +302,20 @@ namespace MagentoSupport\SupportChecker {
         {
             $configToken = $this->scopeConfig->getValue('analytics/general/token');
 
+//            if (!$configToken) {
+//                $output->writeln('<error>No Token found!</error>');
+//            }
+
+//            if (!$this->analyticsToken->isTokenExist()) {
+//                $output->writeln('<error>\Magento\Analytics\Model\AnalyticsToken doesnt return any token</error>');
+//            }
+
             $dbToken = $this->selectFromCoreConfig(
                 ['scope', 'scope_id', 'value'],
                 'analytics/general/token'
             );
 
-            if (!$configToken && !$dbToken) {
+            if (!$configToken && (!$dbToken || empty($dbToken[0]['value']))) {
                 $output->writeln('<error>No Token found</error>');
                 return false;
             }
