@@ -302,14 +302,6 @@ namespace MagentoSupport\SupportChecker {
         {
             $configToken = $this->scopeConfig->getValue('analytics/general/token');
 
-//            if (!$configToken) {
-//                $output->writeln('<error>No Token found!</error>');
-//            }
-
-//            if (!$this->analyticsToken->isTokenExist()) {
-//                $output->writeln('<error>\Magento\Analytics\Model\AnalyticsToken doesnt return any token</error>');
-//            }
-
             $dbToken = $this->selectFromCoreConfig(
                 ['scope', 'scope_id', 'value'],
                 'analytics/general/token'
@@ -317,6 +309,8 @@ namespace MagentoSupport\SupportChecker {
 
             if (!$configToken && (!$dbToken || empty($dbToken[0]['value']))) {
                 $output->writeln('<error>No Token found</error>');
+
+                $this->checkCounter($output);
                 return false;
             }
 
@@ -328,6 +322,18 @@ namespace MagentoSupport\SupportChecker {
             $output->writeln('<error>Token setted in app/etc/*.php file</error>');
 
             return false;
+        }
+
+        private function checkCounter(OutputInterface $output)
+        {
+            $configTable = $this->connection->getTableName('flag');
+            $select = $this->connection->select()->from($configTable)->where('flag_code = :flag_code');
+            $bind = [':flag_code' => 'analytics_link_subscription_update_reverse_counter'];
+            $rows =  $this->connection->fetchAll($select, $bind);
+
+            if ($rows) {
+                $output->writeln('<error>Counter flag found:</error>' . json_encode($rows));
+            }
         }
     }
 
