@@ -1,10 +1,11 @@
 # Installation
 1. Have magento-cloud installed and configured with API TOKEN.
+2. Clone this repo into folder
 
-2. Install shortcut script
+3. Install shortcut script
 ```shell
 
-sudo ln -s /Users/npuchko/www/tools/advanced-reporting-check/magento-support-checker /usr/local/bin/msc
+sudo ln -s {full_patch_to_repo}/magento-support-checker /usr/local/bin/msc
 ```
 
 # Usage
