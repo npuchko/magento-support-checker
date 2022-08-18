@@ -27,6 +27,8 @@ namespace {
             \MagentoSupport\SupportChecker\ProductRecommendations\IndexedData::class,
             \MagentoSupport\SupportChecker\ProductRecommendations\CronCheck::class,
             \MagentoSupport\SupportChecker\ProductRecommendations\SyncCheck::class,
+            \MagentoSupport\SupportChecker\ProductRecommendations\CategoryPermissionsCheck::class,
+
         ]
     ];
 
@@ -721,8 +723,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                 }
             }
 
-            if ($this->scopeConfig->isSetFlag('services_connector/product_recommendations/alternate_environment_enabled'))
-            {
+            if ($this->scopeConfig->isSetFlag('services_connector/product_recommendations/alternate_environment_enabled')) {
                 $output->writeln('<error>Alternate env ENABLED!</error>');
 
             } else {
@@ -808,7 +809,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                         $hasErrors = true;
                     }
 
-                    if ($status === 'success' && $count == 0){
+                    if ($status === 'success' && $count == 0) {
                         $notHaveSuccess = true;
                     }
                     $last = $data[$jobCode . '_' . $status]['last'] ?? ' N/A';
@@ -835,10 +836,10 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
         private $storeManager;
         private $serviceClient;
 
-        public function __construct(ResourceConnection $resource,
+        public function __construct(ResourceConnection                                 $resource,
                                     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                    StoreManagerInterface $storeManager,
-                                    ServiceClientInterface $serviceClient)
+                                    StoreManagerInterface                              $storeManager,
+                                    ServiceClientInterface                             $serviceClient)
         {
             parent::__construct($resource, $scopeConfig);
             $this->storeManager = $storeManager;
@@ -863,7 +864,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
 
             foreach ($stores as $store) {
                 $website = $this->storeManager->getWebsite($store->getWebsiteId())->getCode();
-                $storeCode =$store->getCode();
+                $storeCode = $store->getCode();
                 $output->writeln('Store ' . $storeCode);
 
 
@@ -876,7 +877,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                 $response = $this->serviceClient->request('GET', $apiUrl, '');
 
                 if (!isset($response['storeViewSyncStatusResponse'])) {
-                    $output->writeln('<error>ERROR:</error> ' .json_encode($response));
+                    $output->writeln('<error>ERROR:</error> ' . json_encode($response));
                     continue;
                 }
                 $output->writeln(
@@ -916,7 +917,7 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
                     }
 
                     if ($found) {
-                        $output->writeln('<error>Invalid category filter in: ' ."Unit {$unit['unitId']} {$unit['unitName']}". '</error>');
+                        $output->writeln('<error>Invalid category filter in: ' . "Unit {$unit['unitId']} {$unit['unitName']}" . '</error>');
                     }
                 }
 
@@ -926,6 +927,41 @@ namespace MagentoSupport\SupportChecker\ProductRecommendations {
 
 
             return null;
+        }
+    }
+
+    class CategoryPermissionsCheck extends AbstractDbChecker
+    {
+
+        public function getName()
+        {
+            return 'Category permissions check';
+        }
+
+        public function execute(InputInterface $input, OutputInterface $output)
+        {
+            $table = $this->resource->getTableName('magento_catalogpermissions');
+            $sql = "SELECT count(*) as cnt FROM {$table}";
+            $count = $this->connection->fetchOne($sql);
+
+            if (!$count) {
+                $output->writeln('Category permissions not currently enabled');
+                //return true;
+            }
+            $table = $this->resource->getTableName('catalog_data_exporter_product_overrides');
+            $sql = "SELECT count(*) as cnt, SUM(IF(feed_data like '%displayable%', 1, 0)) as count_permissions FROM {$table};";
+            $row = $this->connection->fetchRow($sql);
+
+            if ($row['count_permissions'] == 0) {
+                return true;
+            }
+
+            if ($row['cnt'] !== $row['count_permissions']) {
+                $output->writeln('<error>Not ALL products have category permissions</error>');
+            }
+
+
+            return false;
         }
     }
 }
