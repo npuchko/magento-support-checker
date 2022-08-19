@@ -1,24 +1,4 @@
-# Installation
-1. Have magento-cloud installed and configured with API TOKEN.
-2. Clone this repo into folder
-
-3. Install shortcut script
-```shell
-
-sudo ln -s {full_patch_to_repo}/magento-support-checker /usr/local/bin/msc
-```
-
-# Usage
-## Interactive
-```shell
-msc
-```
-## Non-interactive
-```shell
-msc {cloud-project-id} {cloud-project-env} {check-name}
-# example
-msc ko32g3ggweggr staging advanced_reporting
-```
+# Installation & Usage
 
 ## List checks:
 - Advanced Reporting
@@ -31,9 +11,40 @@ msc ko32g3ggweggr staging advanced_reporting
 msc ko32g3ggweggr staging product_recommendations
 ```
 
+
+## Magento Cloud automatic deployment script
+
+### Installation
+1. Have magento-cloud installed and configured with API TOKEN.
+2. Clone this repo into folder
+```bash 
+git clone git@github.com:npuchko/magento-support-checker.git
+```
+
+3. Install shortcut script
+```shell
+
+sudo ln -s {full_patch_to_repo}/magento-support-checker /usr/local/bin/msc
+```
+
+### Usage
+#### Interactive
+```shell
+msc
+```
+#### Non-interactive
+```shell
+msc {cloud-project-id} {cloud-project-env} {check-name}
+# example
+msc ko32g3ggweggr staging advanced_reporting
+```
+
+
+
 ## Using without Magento Cloud
-1. Copy phar script into {MAGENTO_ROOT_DIR}/var directory
-2. Run php script
+1. Download phar from this repo: https://github.com/npuchko/magento-support-checker/blob/master/magento_support_checker.phar
+2. Copy phar script into {MAGENTO_ROOT_DIR}/var directory:
+3. Run phar script
 ```bash
 # all checks
 php magento_support_checker.phar all
