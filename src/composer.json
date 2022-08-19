@@ -1,0 +1,17 @@
+{
+    "name": "magento-support/support-checker",
+    "type": "library",
+    "authors": [
+        {
+            "name": "npuchko",
+            "email": "npuchko@adobe.com"
+        }
+    ],
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {
+            "MagentoSupport\\SupportChecker\\": "MagentoSupport/SupportChecker/"
+        }
+    }
+}

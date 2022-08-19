@@ -66,8 +66,8 @@ fi
 
 SCRIPT_DIR=$(getSourceDirOfScript)
 
-echo "Uploading script ${SCRIPT_DIR}/magento_support_checker.php"
-magento-cloud scp -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} ${SCRIPT_DIR}/magento_support_checker.php remote:var/
-magento-cloud ssh -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} "php var/magento_support_checker.php ${CHECK_ID}"
+echo "Uploading script ${SCRIPT_DIR}/magento_support_checker.phar"
+magento-cloud scp -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} ${SCRIPT_DIR}/magento_support_checker.phar remote:var/
+magento-cloud ssh -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} "php var/magento_support_checker.phar ${CHECK_ID}"
 echo "Removing script"
-magento-cloud ssh -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} "rm var/magento_support_checker.php"
+magento-cloud ssh -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} "rm var/magento_support_checker.phar"

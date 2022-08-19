@@ -32,16 +32,18 @@ msc ko32g3ggweggr staging product_recommendations
 ```
 
 ## Using without Magento Cloud
-1. Copy php script into {MAGENTO_ROOT_DIR}/var directory
+1. Copy phar script into {MAGENTO_ROOT_DIR}/var directory
 2. Run php script
 ```bash
 # all checks
-php magento_support_checker.php all
+php magento_support_checker.phar all
 # product recommendations only
-php magento_support_checker.php product_recommendations
+php magento_support_checker.phar product_recommendations
 # advanced reporting only
-php magento_support_checker.php advanced_reporting
+php magento_support_checker.phar advanced_reporting
 ```
+
+
 
 
 # Example report:
@@ -60,3 +62,15 @@ OK
 
 
 ```
+
+
+# Contribution
+
+### To build phar file
+```bash
+cd build && ./build.sh
+```
+
+### To add check
+1. Create new class in src/MagentoSupport/SupportChecker/any_folder
+2. Add class into src/main.php  -> $checksList variable
