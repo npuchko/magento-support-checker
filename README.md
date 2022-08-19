@@ -72,5 +72,5 @@ cd build && ./build.sh
 ```
 
 ### To add check
-1. Create new class in src/MagentoSupport/SupportChecker/any_folder
+1. Create new class in src/MagentoSupport/SupportChecker/Check/{check_folder}
 2. Add class into src/main.php  -> $checksList variable

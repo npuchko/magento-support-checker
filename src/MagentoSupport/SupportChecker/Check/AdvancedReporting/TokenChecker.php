@@ -1,6 +1,6 @@
 <?php
 
-namespace MagentoSupport\SupportChecker\AdvancedReporting;
+namespace MagentoSupport\SupportChecker\Check\AdvancedReporting;
 
 use Magento\Analytics\Model\Config\Backend\CollectionTime;
 use Magento\Analytics\Model\ReportUrlProvider;

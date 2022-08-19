@@ -26,25 +26,24 @@ stream_wrapper_restore('phar');
 include __DIR__ . '/vendor/autoload.php';
 $checksList = [
     'advanced_reporting' => [
-        \MagentoSupport\SupportChecker\AdvancedReporting\EnabledChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\FailedSubscriptionChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\IsMultipleCurrency::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\CronDbCheck::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\TokenChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\FlagChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\EscapedQuotesChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\StoreInconsistencyChecker::class,
-        \MagentoSupport\SupportChecker\AdvancedReporting\ReportUrl::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\EnabledChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\FailedSubscriptionChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\IsMultipleCurrency::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\CronDbCheck::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\TokenChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\FlagChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\EscapedQuotesChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\StoreInconsistencyChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\ReportUrl::class,
     ],
     'product_recommendations' => [
-        \MagentoSupport\SupportChecker\ProductRecommendations\ApiKeys::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\ExtensionVersion::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\EnvIds::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\IndexedData::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\CronCheck::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\SyncCheck::class,
-        \MagentoSupport\SupportChecker\ProductRecommendations\CategoryPermissionsCheck::class,
-
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ApiKeys::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionVersion::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\EnvIds::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\IndexedData::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\CronCheck::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\SyncCheck::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class,
     ]
 ];
 try {

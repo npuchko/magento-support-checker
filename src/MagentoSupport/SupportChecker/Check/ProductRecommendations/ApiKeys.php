@@ -1,5 +1,5 @@
 <?php
-namespace MagentoSupport\SupportChecker\ProductRecommendations;
+namespace MagentoSupport\SupportChecker\Check\ProductRecommendations;
 
 use Magento\CatalogSyncAdmin\Model\ServiceClientInterface;
 use Magento\Framework\App\ResourceConnection;
