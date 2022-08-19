@@ -1,17 +1,5 @@
 # Installation & Usage
 
-## List checks:
-- Advanced Reporting
-```shell
-msc ko32g3ggweggr staging advanced_reporting
-```
-
-- Product recommendations:
-```shell
-msc ko32g3ggweggr staging product_recommendations
-```
-
-
 ## Magento Cloud automatic deployment script
 
 ### Installation
@@ -26,6 +14,7 @@ git clone git@github.com:npuchko/magento-support-checker.git
 
 sudo ln -s {full_patch_to_repo}/magento-support-checker /usr/local/bin/msc
 ```
+
 
 ### Usage
 #### Interactive
