@@ -24,7 +24,7 @@ class Checker
         $this->objectManager = $objectManager;
     }
 
-    public function runChecks(array $checksGroups, ?string $checkGroup = null, InputInterface $input, OutputInterface $output)
+    public function runChecks(array $checksGroups, ?string $checkGroup, InputInterface $input, OutputInterface $output)
     {
         $output->writeln('');
         $result = [];
