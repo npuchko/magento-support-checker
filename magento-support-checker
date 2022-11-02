@@ -29,6 +29,28 @@ printAvailableChecks () {
 }
 
 
+SCRIPT_DIR=$(getSourceDirOfScript)
+
+CURRENT_VERSION=$(cat ${SCRIPT_DIR}/version.txt)
+LAST_VERSION=$(curl https://raw.githubusercontent.com/npuchko/magento-support-checker/master/version.txt)
+
+
+if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]
+  then
+    echo ""
+    echo ""
+    echo -e "Version of checker \033[31m$CURRENT_VERSION\033[0m"
+    echo -e "Latest version is \033[32m$LAST_VERSION\033[0m"
+    echo -e "\033[31m============================================================================================"
+    echo -e "The new version available! Please update https://github.com/npuchko/magento-support-checker"
+    echo -e "============================================================================================\033[0m"
+    echo ""
+    echo ""
+  else
+    echo -e "Version of checker \033[32m$CURRENT_VERSION\033[0m"
+fi;
+
+
 if [ "$1" == "help" ]
 then
     printHelp
@@ -64,7 +86,6 @@ else
   echo "CHECK_ID  is: ${CHECK_ID}"
 fi
 
-SCRIPT_DIR=$(getSourceDirOfScript)
 
 echo "Uploading script ${SCRIPT_DIR}/magento_support_checker.phar"
 magento-cloud scp -p ${CLOUD_PROJECT_ID} -e ${CLOUD_ENV_ID} ${SCRIPT_DIR}/magento_support_checker.phar remote:var/
