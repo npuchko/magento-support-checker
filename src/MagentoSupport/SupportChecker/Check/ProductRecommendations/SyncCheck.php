@@ -61,7 +61,7 @@ class SyncCheck extends AbstractDbChecker
                 continue;
             }
             $output->writeln(
-                "Total count: {$response['documentCountResponse']['documentCount']}"
+                "Total synced products: {$response['documentCountResponse']['documentCount']}"
             );
             $output->writeln(
                 "Last Sync - Num synced: {$response['storeViewSyncStatusResponse']['numSynced']}, "

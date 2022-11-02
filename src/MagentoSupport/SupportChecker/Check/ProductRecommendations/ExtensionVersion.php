@@ -35,6 +35,7 @@ class ExtensionVersion extends AbstractDbChecker
         foreach ($composerData['packages'] as $package) {
             if ($package['name'] === 'magento/product-recommendations') {
                 $version = $package['version'] ?? 'VERSION NOT SET';
+                break;
             }
         }
 
