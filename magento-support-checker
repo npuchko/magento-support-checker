@@ -32,7 +32,7 @@ printAvailableChecks () {
 SCRIPT_DIR=$(getSourceDirOfScript)
 
 CURRENT_VERSION=$(cat ${SCRIPT_DIR}/version.txt)
-LAST_VERSION=$(curl https://raw.githubusercontent.com/npuchko/magento-support-checker/master/version.txt)
+LAST_VERSION=$(curl -H 'Cache-Control: no-cache, no-store' https://raw.githubusercontent.com/npuchko/magento-support-checker/master/version.txt)
 
 
 if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]
