@@ -51,15 +51,14 @@ class FlagChecker extends AbstractDbChecker
         $flagData = json_decode($flag['flag_data'], true);
         $filePath = ROOT_DIRECTORY_FOR_MAGENTO . 'pub/media/' . $flagData['path'];
 
-
+        $output->writeln('');
         if (!is_file($filePath)) {
             $isError = true;
-            $output->writeln('');
             $output->writeln('<error>File not found!</error> ' . $filePath);
         }
 
         $url = $this->scopeConfig->getValue('web/secure/base_url') . 'media/' . $flagData['path'];
-        $output->writeln('File URL: ' . $url);
+        $output->writeln('Try to open File URL: ' . $url);
 
 
         return !$isError;

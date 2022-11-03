@@ -28,7 +28,7 @@ class FailedSubscriptionChecker extends AbstractDbChecker {
 
     public function getName()
     {
-        return 'Failed Subscription Checker';
+        return 'Subscription Checker';
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -41,6 +41,7 @@ class FailedSubscriptionChecker extends AbstractDbChecker {
         ) {
             $url = $this->scopeConfig->getValue(Store::XML_PATH_SECURE_BASE_URL);
             $output->writeln('URL for subscription: ' . $url);
+            $output->writeln('Open this url, it should not be under HTTP AUTH or firewall!');
         }
 
         return true;

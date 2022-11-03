@@ -28,6 +28,7 @@ $checksList = [
     'advanced_reporting' => [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\EnabledChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\FailedSubscriptionChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\ApiEndpointChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\IsMultipleCurrency::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\CronDbCheck::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\TokenChecker::class,
