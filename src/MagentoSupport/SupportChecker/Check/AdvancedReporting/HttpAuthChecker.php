@@ -21,7 +21,7 @@ class HttpAuthChecker extends AbstractDbChecker
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $envUser = getenv('DB_USER');
+        $envUser = getenv('USER');
 
         $routerFile = '/etc/platform/' . $envUser . '/router.json';
         if (!file_exists($routerFile)) {
