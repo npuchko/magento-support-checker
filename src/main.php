@@ -36,6 +36,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\EscapedQuotesChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\StoreInconsistencyChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\ReportUrl::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\HttpAuthChecker::class,
     ],
     'product_recommendations' => [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ApiKeys::class,
