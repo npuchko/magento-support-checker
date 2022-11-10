@@ -9,7 +9,7 @@ use MagentoSupport\SupportChecker\AbstractDbChecker;
 
 class HttpAuthChecker extends AbstractDbChecker
 {
-    private array $whitelistIps = [
+    private $whitelistIps = [
         '34.206.147.74',
         '35.172.154.189'
     ];
