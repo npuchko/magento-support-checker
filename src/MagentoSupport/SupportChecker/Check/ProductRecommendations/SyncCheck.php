@@ -81,7 +81,7 @@ class SyncCheck extends AbstractDbChecker
 
             foreach ($response['results'] as $unit) {
                 $found = false;
-                foreach ($unit['filterRules'] as $filterRule) {
+                foreach ($unit['filterRules'] ?? [] as $filterRule) {
                     foreach ($filterRule['conditions'] as $condition) {
                         if ($condition['field'] === 'category') {
                             //$found = true;
