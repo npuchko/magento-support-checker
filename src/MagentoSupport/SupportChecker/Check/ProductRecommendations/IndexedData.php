@@ -83,10 +83,14 @@ class IndexedData extends AbstractDbChecker
 
     private function count($table)
     {
-        $table = $this->resource->getTableName($table);
+        try {
+            $table = $this->resource->getTableName($table);
+            $sql = "SELECT COUNT(*) FROM {$table}";
+            return $this->connection->fetchOne($sql);
+        } catch (\Throwable $e) {
+            return -1;
+        }
 
-        $sql = "SELECT COUNT(*) FROM {$table}";
-        return $this->connection->fetchOne($sql);
     }
 
     private function getCountOfProductsWithoutWebsites()
