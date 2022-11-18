@@ -69,6 +69,8 @@ class ApiEndpointChecker extends AbstractDbChecker
                 $output->writeln('Integration is active');
             }
             $consumerId = $integration->getConsumerId();
+
+            $this->checkConsumerAcl($output, $consumerId);
             $accessToken = $this->oauthService->getAccessToken($consumerId);
 
             if (!$accessToken) {
@@ -89,5 +91,53 @@ class ApiEndpointChecker extends AbstractDbChecker
 
         return true;
 
+    }
+
+    private function checkConsumerAcl(OutputInterface $output, $consumerId)
+    {
+        $roleTable = $this->connection->getTableName('authorization_role');
+        $ruleTable = $this->connection->getTableName('authorization_rule');
+
+
+        $select = $this->connection
+            ->select()
+            ->from($roleTable, ['role_id'])
+            ->where('user_id = :userId AND role_type = "U" and user_type="1"');
+        $bind = [':userId' => $consumerId];
+
+        $roleId = $this->connection->fetchOne($select, $bind);
+
+        if (!$roleId) {
+
+            $output->writeln('<error>Consumer id '. $consumerId . ' doesnt have any role in authorization_role table</error>');
+            return;
+        }
+
+        $select = $this->connection
+            ->select()
+            ->from($ruleTable)
+            ->reset('columns')
+            ->columns(['resource_id', 'permission'])
+            ->where('role_id = :roleId');
+        $bind = [':roleId' => $roleId];
+        $aclRows =  $this->connection->fetchPairs($select, $bind);
+
+        $checkList = [
+            'Magento_Analytics::analytics',
+            'Magento_Analytics::analytics_api'
+        ];
+
+        $isError = false;
+        foreach ($checkList as $role) {
+            if (empty($aclRows[$role]) || $aclRows[$role] !== 'allow') {
+                $isError = true;
+                $output->writeln('<error>Consumer id '. $consumerId . ' doesnt have access to '.$role.'</error>');
+            }
+        }
+
+
+        if (!$isError) {
+            $output->writeln('<error>Consumer id '. $consumerId . ' has all necessary access</error>');
+        }
     }
 }
