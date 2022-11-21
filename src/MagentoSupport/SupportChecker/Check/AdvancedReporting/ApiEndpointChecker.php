@@ -137,7 +137,7 @@ class ApiEndpointChecker extends AbstractDbChecker
 
 
         if (!$isError) {
-            $output->writeln('<error>Consumer id '. $consumerId . ' has all necessary access</error>');
+            $output->writeln('<info>Consumer id '. $consumerId . ' has all necessary access</info>');
         }
     }
 }
