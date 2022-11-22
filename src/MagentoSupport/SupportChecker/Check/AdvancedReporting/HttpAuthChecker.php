@@ -35,13 +35,27 @@ class HttpAuthChecker extends AbstractDbChecker
 
             if (!empty($routerConfig['http_access']['addresses'])) {
                 $wlMatched = 0;
-                foreach ($routerConfig['http_access']['addresses'] as $ip) {
+                $ipsAfterZeroRestrictAccessFound = null;
+                foreach ($routerConfig['http_access']['addresses'] as $index=>$ip) {
                     if (preg_match('/^[\d+\.]+/', $ip['address'], $matches) && $matches[0]) {
+                        if ($matches[0] === '0.0.0.0' && $ip['permission'] === 'deny') {
+                            $ipsAfterZeroRestrictAccessFound = isset($routerConfig['http_access']['addresses'][$index+1]);
+
+                        }
+
                         if ($ip['permission'] == "allow" && in_array($matches[0], $this->whitelistIps)) {
                             $output->writeln($ip['address'] . ' is whitelisted');
                             $wlMatched++;
                         }
                     }
+                }
+
+                if ($ipsAfterZeroRestrictAccessFound) {
+                    $output->writeln('<error>MOVE 0.0.0.0 deny to the end of whitelist!</error>');
+                } elseif ($ipsAfterZeroRestrictAccessFound === null) {
+                    $output->writeln('<info> 0.0.0.0 deny not found!</info>');
+                } else {
+                    $output->writeln('<info> 0.0.0.0 deny at the end of the list!</info>');
                 }
 
                 if ($wlMatched == count($this->whitelistIps)) {
