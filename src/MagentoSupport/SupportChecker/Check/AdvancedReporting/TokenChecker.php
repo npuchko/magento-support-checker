@@ -56,6 +56,8 @@ class TokenChecker extends AbstractDbChecker
         }
 
         $output->writeln('<error>Token setted in app/etc/*.php file</error>');
+        $output->writeln('Token in db: ' . var_export($dbToken, true));
+        $output->writeln('Token returned by magento: ' . var_export($configToken, true));
 
         return false;
     }

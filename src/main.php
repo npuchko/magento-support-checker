@@ -38,6 +38,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\StoreInconsistencyChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\ReportUrl::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\HttpAuthChecker::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class
     ],
     'product_recommendations' => [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ApiKeys::class,
@@ -47,6 +48,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CronCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\SyncCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class
     ]
 ];
 try {
