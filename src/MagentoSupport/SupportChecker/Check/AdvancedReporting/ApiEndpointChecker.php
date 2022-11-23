@@ -123,6 +123,7 @@ class ApiEndpointChecker extends AbstractDbChecker
         $aclRows =  $this->connection->fetchPairs($select, $bind);
 
         $checkList = [
+            'Magento_Backend::admin',
             'Magento_Analytics::analytics',
             'Magento_Analytics::analytics_api'
         ];
