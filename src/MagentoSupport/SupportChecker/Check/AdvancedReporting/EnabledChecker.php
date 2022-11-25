@@ -37,7 +37,14 @@ class EnabledChecker extends AbstractDbChecker
     {
         $subscriptionStatus = $this->subscriptionStatusProvider->getStatus();
         $output->writeln('');
-        $output->writeln('Subscription status: ' . $subscriptionStatus);
+        $formattedSubscriptionStatus = $subscriptionStatus;
+        if ($subscriptionStatus === SubscriptionStatusProvider::ENABLED) {
+            $formattedSubscriptionStatus = '<info>' . $subscriptionStatus . '</info>';
+        } else {
+            $formattedSubscriptionStatus = '<error>' . $subscriptionStatus . '</error>';
+        }
+        $output->writeln('Subscription status: ' . $formattedSubscriptionStatus);
+
         if (SubscriptionStatusProvider::PENDING === $subscriptionStatus) {
             $output->writeln('<error>Check for cron job analytics_subscribe</error>');
         }
