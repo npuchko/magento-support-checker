@@ -25,5 +25,11 @@ class CoreConfigDataCheck extends AbstractDbChecker
             }
         }
 
+        if ($this->scopeConfig->isSetFlag('web/session/use_remote_addr')) {
+            $output->writeln('<error>Stores -> Configuration -> General -> Web -> Session Validation Settings -> Validate REMOTE_ADDR = "Yes"</error>');
+            $output->writeln('<comment>web/session/use_remote_addr is not recommended when using load balancer/fastly/cloudflare</comment>');
+        }
+
+        return true;
     }
 }

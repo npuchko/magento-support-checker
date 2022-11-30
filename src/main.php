@@ -25,6 +25,10 @@ stream_wrapper_restore('phar');
 
 include __DIR__ . '/vendor/autoload.php';
 $checksList = [
+    'general' => [
+        \MagentoSupport\SupportChecker\Check\General\CoreConfigDataCheck::class,
+        \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class,
+    ],
     'advanced_reporting' => [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\EnabledChecker::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\BaseUrlSettingsChecker::class,
