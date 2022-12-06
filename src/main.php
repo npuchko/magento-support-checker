@@ -46,6 +46,7 @@ $checksList = [
     ],
     'product_recommendations' => [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ApiKeys::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionsEnabledCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionVersion::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\EnvIds::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\IndexedData::class,
