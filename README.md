@@ -5,6 +5,22 @@ There are two scripts:
 magento_support_checker.phar - contains all the checks and can be used independently
 magento-support-checker - bash command to upload `magento_support_checker.phar` to Magento Cloud automatically
 
+## Existing checks
+
+| Check ID                | Description                             |
+|-------------------------|-----------------------------------------|
+| all                     | Run all checks                          |
+| general                 | General Magento checks                  |
+| product_recommendations | Product Recommendations troubleshooting |
+| advanced_reporting      | Advanced Reporting troubleshooting      |
+
+## Usage without installation
+```bash
+cd <magento_root_folder>/var
+wget https://github.com/npuchko/magento-support-checker/raw/master/magento_support_checker.phar
+php magento_support_checker.phar <check_id>
+```
+
 ## Magento Cloud automatic deployment script
 
 ### Installation
