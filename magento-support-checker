@@ -44,6 +44,7 @@ if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]
     echo -e "Latest version is \033[32m$LAST_VERSION\033[0m"
     echo -e "\033[31m============================================================================================"
     echo -e "The new version available! Please update https://github.com/npuchko/magento-support-checker"
+    echo -e "Just run \033[32mcd $SCRIPT_DIR && git fetch && git pull\033[0m"
     echo -e "============================================================================================\033[0m"
     echo ""
     echo ""
