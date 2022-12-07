@@ -11,7 +11,10 @@ class HttpAuthChecker extends AbstractDbChecker
 {
     private $whitelistIps = [
         '34.206.147.74',
-        '35.172.154.189'
+        '35.172.154.189',
+        '54.144.21.42',
+        '3.85.182.28',
+        '52.73.51.61',
     ];
 
     public function getName()

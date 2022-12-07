@@ -38,7 +38,18 @@ class CronDbCheck extends AbstractDbChecker
         $cronAnalyticsConfig = $this->scopeConfig->getValue('crontab/default/jobs/analytics_collect_data/schedule/cron_expr');
 
         if ($cronAnalyticsConfig && $cronDefaultConfig) {
-            $output->writeln('<error>Cron setted up for 2 cron groups: default and analytics. Remove old one!</error>');
+            $output->writeln('<error>Cron setted up for 2 cron groups: "default" and "analytics".</error>');
+            $xmlFile = ROOT_DIRECTORY_FOR_MAGENTO . '/vendor/magento/module-analytics/etc/crontab.xml';
+            $data = simplexml_load_string(file_get_contents($xmlFile));
+
+            $rightGroup = (string)$data->group['id'];
+            $output->writeln('Current cron group is <comment>'.$rightGroup.'</comment>');
+            if ($rightGroup === 'default') {
+
+                $output->writeln('<error>REMOVE crontab/analytics/jobs/analytics_collect_data/schedule/cron_expr config</error>');
+            } else {
+                $output->writeln('<error>REMOVE crontab/default/jobs/analytics_collect_data/schedule/cron_expr config</error>');
+            }
         }
 
         $cronJob = $this->findAnalyticsCronJobInDb();
