@@ -22,6 +22,11 @@ class ApiKeys extends AbstractDbChecker
     {
         $productionApiKey = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_api_key');
         $private = $this->scopeConfig->getValue('services_connector/services_connector_integration/production_private_key');
+        $area = $this->scopeConfig->getValue('magento_saas/environment');
+
+        if ($area !== 'production') {
+            $output->writeln('<error>Setting "magento_saas/environment" shoud be set to "production" value. Now it is "' . $area .'"</error>');
+        }
 
 
         if (!$productionApiKey) {
