@@ -14,12 +14,12 @@ use Magento\Framework\App\ResourceConnection;
 abstract class AbstractDbChecker //implements CheckInterface
 {
     /**
-     * @var resource Connection
+     * @var ResourceConnection
      */
     protected $connection;
 
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     protected $scopeConfig;
     protected $resource;
@@ -28,7 +28,7 @@ abstract class AbstractDbChecker //implements CheckInterface
      * DbDataSeeker constructor.
      * @param ResourceConnection $resource
      */
-    public function __construct(ResourceConnection $resource, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig)
+    public function __construct(ResourceConnection $resource, ScopeConfigInterface $scopeConfig)
     {
         $this->connection = $resource->getConnection(\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION);
         $this->scopeConfig = $scopeConfig;

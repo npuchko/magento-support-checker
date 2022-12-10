@@ -28,6 +28,7 @@ $checksList = [
     'general' => [
         \MagentoSupport\SupportChecker\Check\General\CoreConfigDataCheck::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class,
+        \MagentoSupport\SupportChecker\Check\General\MysqlQueueCheck::class,
     ],
     'advanced_reporting' => [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\EnabledChecker::class,
