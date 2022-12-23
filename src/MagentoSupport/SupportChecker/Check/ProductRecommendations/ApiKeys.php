@@ -32,10 +32,12 @@ class ApiKeys extends AbstractDbChecker
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $isError = false;
         $area = $this->scopeConfig->getValue('magento_saas/environment');
 
         if ($area !== 'production') {
             $output->writeln('<error>Setting "magento_saas/environment" shoud be set to "production" value. Now it is "' . $area .'"</error>');
+            $isError = true;
         }
 
         $keys = [
@@ -45,6 +47,7 @@ class ApiKeys extends AbstractDbChecker
             'sandbox_private_key',
         ];
 
+
         foreach ($keys as $key) {
             $fullKey = 'services_connector/services_connector_integration/' . $key;
             $value = $this->scopeConfig->getValue($fullKey);
@@ -52,6 +55,7 @@ class ApiKeys extends AbstractDbChecker
 
             if (!$value) {
                 $output->writeln('<error>'.$key.' not found! Please fill all the API/Private keys including sandbox</error>');
+                $isError = true;
                 continue;
             }
 
@@ -62,10 +66,11 @@ class ApiKeys extends AbstractDbChecker
 
             if (!$this->checkPrivateKey($value) && !$this->checkPrivateKey($decryptedValue)) {
                 $output->writeln('<error>'.$key.' seems incorrect. Each key should have -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY----- and should contain line breaks</error>');
+                $isError = true;
             }
         }
 
-        return $productionApiKey && $private;
+        return $isError;
     }
 
 

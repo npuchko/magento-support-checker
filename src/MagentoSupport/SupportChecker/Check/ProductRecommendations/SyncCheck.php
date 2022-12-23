@@ -39,6 +39,10 @@ class SyncCheck extends AbstractDbChecker
             return false;
         }
 
+        $indexTable = $this->connection->getTableName('catalog_data_exporter_products');
+        $countInIndexSql = " select store_view_code, count(*) from `{$indexTable}` group by store_view_code";
+        $counts = $this->connection->fetchPairs($countInIndexSql);
+
 
         $stores = $this->storeManager->getStores(false);
 
@@ -61,8 +65,17 @@ class SyncCheck extends AbstractDbChecker
                 continue;
             }
             $output->writeln(
-                "Total synced products: {$response['documentCountResponse']['documentCount']}"
+                "Total synced products on SaaS side: {$response['documentCountResponse']['documentCount']}"
             );
+
+            $countInIndex = $counts[$storeCode] ?? 0;
+
+            if ((int)$countInIndex !== (int)$response['documentCountResponse']['documentCount']) {
+                $output->writeln(
+                    "<error>Counts are different!</error> SaaS count: {$response['documentCountResponse']['documentCount']}, Magento Index count: {$countInIndex}"
+                );
+            }
+
             $output->writeln(
                 "Last Sync - Num synced: {$response['storeViewSyncStatusResponse']['numSynced']}, "
                 . "Last Time: {$response['storeViewSyncStatusResponse']['lastSyncTs']}, "

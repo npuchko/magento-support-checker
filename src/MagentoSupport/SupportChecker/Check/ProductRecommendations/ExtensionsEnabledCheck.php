@@ -52,8 +52,8 @@ class ExtensionsEnabledCheck extends AbstractDbChecker
         ];
 
         $result = $this->checkExtensions($extensions, $output);
-        if (!$result) {
-            $output->writeln('');
+        if ($result) {
+            $output->writeln('<info>OK</info>');
         }
         $output->writeln('<comment>Checking PWA extensions:</comment>');
 
