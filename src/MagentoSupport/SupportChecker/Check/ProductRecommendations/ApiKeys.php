@@ -70,7 +70,7 @@ class ApiKeys extends AbstractDbChecker
             }
         }
 
-        return $isError;
+        return !$isError;
     }
 
 
