@@ -22,10 +22,25 @@ class CronDbCheck extends AbstractDbChecker
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $jobs = [
+            'analytics_subscribe',
+            'analytics_update',
+            'analytics_collect_data',
+        ];
+        $output->writeln('');
+        foreach ($jobs as $job) {
+            $output->writeln('Checking ' . $job);
+            $this->checkCronJob($job, $output);
+        }
 
+        return false;
+    }
+
+    public function checkCronJob($code, OutputInterface $output)
+    {
         $row = $this->selectFromCoreConfig(
             ['scope', 'scope_id', 'value'],
-            '%analytics_collect_data/schedule/cron_expr'
+            '%'.$code.'/schedule/cron_expr'
         );
 
         if (!$row) {
@@ -34,8 +49,8 @@ class CronDbCheck extends AbstractDbChecker
             $output->writeln(json_encode($row));
         }
 
-        $cronDefaultConfig = $this->scopeConfig->getValue('crontab/analytics/jobs/analytics_collect_data/schedule/cron_expr');
-        $cronAnalyticsConfig = $this->scopeConfig->getValue('crontab/default/jobs/analytics_collect_data/schedule/cron_expr');
+        $cronDefaultConfig = $this->scopeConfig->getValue('crontab/analytics/jobs/'.$code.'/schedule/cron_expr');
+        $cronAnalyticsConfig = $this->scopeConfig->getValue('crontab/default/jobs/'.$code.'/schedule/cron_expr');
 
         if ($cronAnalyticsConfig && $cronDefaultConfig) {
             $output->writeln('<error>Cron setted up for 2 cron groups: "default" and "analytics".</error>');
@@ -46,13 +61,13 @@ class CronDbCheck extends AbstractDbChecker
             $output->writeln('Current cron group is <comment>'.$rightGroup.'</comment>');
             if ($rightGroup === 'default') {
 
-                $output->writeln('<error>REMOVE crontab/analytics/jobs/analytics_collect_data/schedule/cron_expr config</error>');
+                $output->writeln('<error>REMOVE crontab/analytics/jobs/'.$code.'/schedule/cron_expr config</error>');
             } else {
-                $output->writeln('<error>REMOVE crontab/default/jobs/analytics_collect_data/schedule/cron_expr config</error>');
+                $output->writeln('<error>REMOVE crontab/default/jobs/'.$code.'/schedule/cron_expr config</error>');
             }
         }
 
-        $cronJob = $this->findAnalyticsCronJobInDb();
+        $cronJob = $this->findAnalyticsCronJobInDb($code);
         if (count($cronJob)) {
             $hasErrors = false;
             $errorMessages = [];
@@ -78,20 +93,17 @@ class CronDbCheck extends AbstractDbChecker
         } else {
             $output->writeln('Cron jobs in DB not found');
         }
-
-        return false;
     }
-
     /**
-     * Find all analytics_collect_data rows
+     * Find all cron rows
      * @return false|string
      */
-    private function findAnalyticsCronJobInDb()
+    private function findAnalyticsCronJobInDb($code)
     {
         $select = $this->connection->select()->from(
             $this->connection->getTableName('cron_schedule'),
             ['job_code', 'messages', 'status'])->where('job_code LIKE :job_code');
-        $bind = [':job_code' => 'analytics_collect_data'];
+        $bind = [':job_code' => $code];
         return $this->connection->fetchAll($select, $bind);
 
 

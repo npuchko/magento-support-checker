@@ -40,9 +40,15 @@ class ReportUrl extends AbstractDbChecker
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $url = $this->reportUrlProvider->getUrl();
+        try {
+            $url = $this->reportUrlProvider->getUrl();
 
-        $output->writeln($url);
+            $output->writeln($url);
+        } catch (\Throwable $e) {
+            $output->writeln('<error>ERROR! </error>');
+            $output->writeln((string)$e);
+        }
+
 
         return false;
     }
