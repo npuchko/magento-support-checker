@@ -23,11 +23,30 @@ class FlagChecker extends AbstractDbChecker
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $newBaseUrlFlag = $this->getUpdateBaseUrlFlag();
+        $counterFlag = $this->getCounterFlag();
+
+        if ($newBaseUrlFlag) {
+            $output->writeln('<error>Base URL was changed! Old base url is: '.$newBaseUrlFlag['flag_data'].'</error>');
+
+            if (!$counterFlag) {
+                $output->writeln('<error>Counter flag NOT found! Check error logs!!</error>');
+            }
+
+            $row = $this->selectFromCoreConfig(
+                ['scope', 'scope_id', 'value'],
+                '%analytics_update/schedule/cron_expr'
+            );
+
+            if (!$row) {
+                $output->writeln('<error>Job schedule for analytics_update cron job NOT FOUND</error>');
+            }
+        }
         $flag = $this->checkFlagTable();
 
         if (!count($flag)) {
             $output->writeln('<error>Flag not found, report wasnt generated</error>');
-            $counterFlag = $this->getCounterFlag();
+
             if ($counterFlag) {
                 $output->writeln('<error>Counter flag found: ' . json_encode($counterFlag) . '</error>');
             }
@@ -81,6 +100,16 @@ class FlagChecker extends AbstractDbChecker
             ['flag_code', 'flag_data', 'last_update'])
             ->where('flag_code LIKE :flag_code');
         $bind = [':flag_code' => 'analytics_link_subscription_update_reverse_counter'];
+        return $this->connection->fetchAll($select, $bind);
+    }
+
+    private function getUpdateBaseUrlFlag()
+    {
+        $select = $this->connection->select()->from(
+            $this->connection->getTableName('flag'),
+            ['flag_code', 'flag_data', 'last_update'])
+            ->where('flag_code LIKE :flag_code');
+        $bind = [':flag_code' => 'analytics_previous_base_url'];
         return $this->connection->fetchAll($select, $bind);
     }
 }
