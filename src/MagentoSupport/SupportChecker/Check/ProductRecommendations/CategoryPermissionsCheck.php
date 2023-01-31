@@ -40,6 +40,14 @@ class CategoryPermissionsCheck extends AbstractDbChecker
             $output->writeln('<error>Not ALL products have category permissions</error>');
         }
 
+        /* Find all customer groups without enabled permissions */
+        /*
+         SELECT customer_group.customer_group_id, customer_group_code, sha1(customer_group.customer_group_id) FROM customer_group
+LEFT JOIN magento_catalogpermissions mc on customer_group.customer_group_id = mc.customer_group_id
+
+WHERE mc.customer_group_id is null;
+         */
+
 
         return false;
     }
