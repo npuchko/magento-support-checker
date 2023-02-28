@@ -31,6 +31,42 @@ class SyncCheck extends AbstractDbChecker
         return 'Sync Status';
     }
 
+    /**
+     * @return array
+     */
+    private function getCountsForStoreViews()
+    {
+        $indexTable = $this->connection->getTableName('catalog_data_exporter_products');
+        /*
+         select
+    store_view_code, count(*) as count,
+    SUM(IF(feed_data like '%displayable":true%', 1, 0)) as count_displayable,
+    SUM(IF(feed_data like '%inStock":true%', 1, 0)) as count_in_stock,
+    SUM(IF(feed_data like '%buyable":true%', 1, 0)) as count_buyable
+    from `catalog_data_exporter_products` group by store_view_code;
+         */
+        $countInIndexSql = "select 
+    store_view_code, count(*) as count, 
+    SUM(IF(feed_data like '%displayable\":true%', 1, 0)) as count_displayable, 
+    SUM(IF(feed_data like '%inStock\":true%', 1, 0)) as count_in_stock, 
+    SUM(IF(feed_data like '%buyable\":true%', 1, 0)) as count_buyable
+    from `{$indexTable}` group by store_view_code";
+
+        $counts = $this->connection->fetchAll($countInIndexSql);
+
+        $result = [];
+        foreach ($counts as $row) {
+            $result[$row['store_view_code']] = [
+                'count_total' => $row['count'],
+                'count_displayable' => $row['count_displayable'],
+                'count_in_stock' => $row['count_in_stock'],
+                'count_buyable' => $row['count_buyable'],
+            ];
+        }
+
+        return $result;
+    }
+
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $envId = $this->scopeConfig->getValue('services_connector/services_id/environment_id');
@@ -39,11 +75,7 @@ class SyncCheck extends AbstractDbChecker
             return false;
         }
 
-        $indexTable = $this->connection->getTableName('catalog_data_exporter_products');
-        $countInIndexSql = " select store_view_code, count(*) from `{$indexTable}` group by store_view_code";
-        $counts = $this->connection->fetchPairs($countInIndexSql);
-
-
+        $counts = $this->getCountsForStoreViews();
         $stores = $this->storeManager->getStores(false);
 
         foreach ($stores as $store) {
@@ -68,13 +100,23 @@ class SyncCheck extends AbstractDbChecker
                 "Total synced products on SaaS side: {$response['documentCountResponse']['documentCount']}"
             );
 
-            $countInIndex = $counts[$storeCode] ?? 0;
+            $countInIndex = $counts[$storeCode]['count_total'] ?? 0;
+            $countDisplayableInIndex = $counts[$storeCode]['count_displayable'] ?? 0;
+            $countBuyableInIndex = $counts[$storeCode]['count_buyable'] ?? 0;
+            $countInStockInIndex = $counts[$storeCode]['count_in_stock'] ?? 0;
 
             if ((int)$countInIndex !== (int)$response['documentCountResponse']['documentCount']) {
-                $output->writeln(
-                    "<error>Counts are different!</error> SaaS count: {$response['documentCountResponse']['documentCount']}, Magento Index count: {$countInIndex}"
+                $output->write(
+                    "<error>Counts are different!</error>"
                 );
             }
+
+            $output->writeln(
+                "SaaS count: {$response['documentCountResponse']['documentCount']}, Magento Index count: {$countInIndex},"
+                . " Displayable=true Magento Index Count: {$countDisplayableInIndex}"
+                . " Buyable=true Magento Index Count: {$countBuyableInIndex}"
+                . " Is In Stock=true Magento Index Count: {$countInStockInIndex}"
+            );
 
             $output->writeln(
                 "Last Sync - Num synced: {$response['storeViewSyncStatusResponse']['numSynced']}, "
