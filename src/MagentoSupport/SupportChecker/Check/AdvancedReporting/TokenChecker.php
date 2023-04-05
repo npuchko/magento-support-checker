@@ -39,7 +39,7 @@ class TokenChecker extends AbstractDbChecker
         $configToken = $this->scopeConfig->getValue('analytics/general/token');
 
         $dbToken = $this->selectFromCoreConfig(
-            ['scope', 'scope_id', 'value'],
+            ['scope', 'scope_id', 'value', 'updated_at'],
             'analytics/general/token'
         );
 
@@ -50,7 +50,11 @@ class TokenChecker extends AbstractDbChecker
             return false;
         }
 
+        $updatedAt = $dbToken[0]['updated_at'];
         $dbToken = $dbToken[0]['value'] ?? null;
+
+        $output->writeln('Token in db: ' . $dbToken . ' UPDATED AT ' . $updatedAt);
+
         if ($configToken == $dbToken) {
             return true;
         }
