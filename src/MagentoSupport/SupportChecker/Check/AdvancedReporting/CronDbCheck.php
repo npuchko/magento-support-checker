@@ -14,6 +14,16 @@ use MagentoSupport\SupportChecker\AbstractDbChecker;
 
 class CronDbCheck extends AbstractDbChecker
 {
+    /**
+     * @var \Magento\Framework\App\DeploymentConfig
+     */
+    private $deploymentConfig;
+
+    public function __construct(ResourceConnection $resource, ScopeConfigInterface $scopeConfig, \Magento\Framework\App\DeploymentConfig $deploymentConfig)
+    {
+        parent::__construct($resource, $scopeConfig);
+        $this->deploymentConfig = $deploymentConfig;
+    }
 
     public function getName()
     {
@@ -38,6 +48,11 @@ class CronDbCheck extends AbstractDbChecker
 
     public function checkCronJob($code, OutputInterface $output)
     {
+        if (!$this->deploymentConfig->get('cron/enabled', 1)) {
+            $output->writeln('<error>' . 'Cron is disabled. Jobs were not run.' . '</error>');
+            $output->writeln('<error>Enable cron in app/etc/env.php!</error>');
+        }
+
         $row = $this->selectFromCoreConfig(
             ['scope', 'scope_id', 'value'],
             '%'.$code.'/schedule/cron_expr'
