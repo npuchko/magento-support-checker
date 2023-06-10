@@ -29,6 +29,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\General\CoreConfigDataCheck::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class,
         \MagentoSupport\SupportChecker\Check\General\MysqlQueueCheck::class,
+        \MagentoSupport\SupportChecker\Check\General\InventoryViewDefaultStockCheck::class,
     ],
     'advanced_reporting' => [
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\EnabledChecker::class,
@@ -51,6 +52,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionVersion::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\EnvIds::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\IndexedData::class,
+        \MagentoSupport\SupportChecker\Check\General\InventoryViewDefaultStockCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CronCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\SyncCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class,
@@ -62,6 +64,7 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionVersion::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\EnvIds::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\IndexedData::class,
+        \MagentoSupport\SupportChecker\Check\General\InventoryViewDefaultStockCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CronCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class
     ]
