@@ -28,27 +28,41 @@ class Checker
     {
         $output->writeln('');
         $result = [];
+        $found = false;
         foreach ($checksGroups as $group => $checkClasses) {
 
             if ($checkGroup !== null && $checkGroup != $group) {
                 continue;
             }
+            $found = true;
             $result[$group] = [];
 
             $total = count($checkClasses);
             $output->writeln("Check group: {$group} with total {$total} rules'");
             foreach ($checkClasses as $i => $checkClass) {
-                /** @var AbstractDbChecker $check */
-                $check = $this->objectManager->get($checkClass);
+                try {
+                    /** @var AbstractDbChecker $check */
+                    $check = $this->objectManager->get($checkClass);
 
-                $i++;
-                $output->write("[{$i}/$total] " . $check->getName() . ': ');
-                $result = $check->execute($input, $output);
+                    $i++;
+                    $output->write("[{$i}/$total] " . $check->getName() . ': ');
+                    $result = $check->execute($input, $output);
+                } catch (\Throwable $e) {
+                    $result = false;
+                    $output->writeln('<error>Error running check '.$checkClass.'</error>');
+
+                    $output->writeln('<error>'.$e->getMessage().'</error>');
+                }
+
                 if ($result === true) {
                     $output->writeln('<info>OK</info>');
                 }
             }
             $output->writeln('');
+        }
+
+        if (!$found) {
+            $output->writeln('<error>Checks id '.$checkGroup.' are not found!</error>');
         }
 
         return $result;

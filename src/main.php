@@ -55,6 +55,15 @@ $checksList = [
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\SyncCheck::class,
         \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class,
         \MagentoSupport\SupportChecker\Check\AdvancedReporting\OpExcludeChecker::class
+    ],
+    'live_search' => [
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ApiKeys::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionsEnabledCheck::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\ExtensionVersion::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\EnvIds::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\IndexedData::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\CronCheck::class,
+        \MagentoSupport\SupportChecker\Check\ProductRecommendations\CategoryPermissionsCheck::class
     ]
 ];
 try {

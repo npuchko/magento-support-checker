@@ -48,7 +48,15 @@ class IndexedData extends AbstractDbChecker
         $countCustomerGroups = $this->count("customer_group");
         $output->writeln("catalog_data_exporter_product_overrides index has {$countOverrides} rows (customer groups count {$countCustomerGroups})");
 
+        $countOutOfStock = $this->count('catalog_data_exporter_products', 'feed_data like \'%"inStock":false%\'');
 
+        $percent = $countOutOfStock > 0 ? round($countOutOfStock / $dataExporterCount * 100) : 0;
+
+        if ($percent > 40) {
+            $output->writeln("<error>More than 40% ({$percent}%) products are out of stock!</error>");
+        } else {
+            $output->writeln("{$percent}% of product are out of stock");
+        }
 
         $percent = 0;
         if ($productsTotalCount != 0) {
@@ -81,11 +89,14 @@ class IndexedData extends AbstractDbChecker
         return false;
     }
 
-    private function count($table)
+    private function count($table, $where = '')
     {
         try {
             $table = $this->resource->getTableName($table);
             $sql = "SELECT COUNT(*) FROM {$table}";
+            if ($where) {
+                $sql .= " WHERE {$where}";
+            }
             return $this->connection->fetchOne($sql);
         } catch (\Throwable $e) {
             return -1;

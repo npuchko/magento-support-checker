@@ -26,6 +26,7 @@ printAvailableChecks () {
   echo "general - run only general checks"
   echo "advanced_reporting - run only advanced_reporting"
   echo "product_recommendations - run only product_recommendations"
+  echo "live_search - run only live_search"
   echo ""
 }
 
